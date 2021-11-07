@@ -9,7 +9,7 @@ cpu_estado_t *cpu_estado_cria(){
     estado->pc = 0;
     estado->a = 0;
     estado->x = 0;
-    estado->modo = 0;
+    estado->modo = ERR_OK;
     estado->cp = 0;
     return estado;
 }
@@ -20,7 +20,7 @@ cpu_t *cpu_cria(){
 }
 
 cpu_estado_t *cpu_estado(cpu_t *cpu){
-   // return cpu->estado;
+    return &cpu->estado;
 }
 
 void cpu_altera_estado(cpu_t *cpu, cpu_estado_t *estado){
@@ -40,33 +40,33 @@ void cpu_altera_es(cpu_t *cpu, es_t *es){
 }
 
 err_t cpu_executa_1(cpu_t *cpu){
-    printf("intrucao que vai ser executada %d\n", cpu->mem[cpu->estado.pc]);
+    printf("intrucao que vai ser executada %d\n", cpu->mem->mem[cpu->estado.pc]);
     int a1;
-    switch(cpu->mem[cpu->estado.pc]){
-        case 0:
+    switch(cpu->mem->mem[cpu->estado.pc]){
+        case 0:   // NOP
             cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 1:
+        case 1:   //PARA
             cpu->estado.modo = ERR_CPU_PARADA;
             cpu->estado.cp = cpu->estado.pc; //acerta o valor de cp
             return cpu->estado.modo;
         break;
 
-        case 2://A=A1
+        case 2://A=A1   CARGI
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
                 return cpu->estado.modo;
             }
             cpu->estado.a = a1;
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
 
         break;
 
-        case 3://A=mem[A1]
+        case 3://A=mem[A1]    CARGM
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -79,11 +79,11 @@ err_t cpu_executa_1(cpu_t *cpu){
             }else{
                 cpu->estado.a = a1;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 4://A=mem[A1+X]
+        case 4://A=mem[A1+X]   CARGX
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -98,11 +98,11 @@ err_t cpu_executa_1(cpu_t *cpu){
             }else{
                 cpu->estado.a = a1;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 5://mem[A1]=A
+        case 5://mem[A1]=A   ARMM
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -113,11 +113,11 @@ err_t cpu_executa_1(cpu_t *cpu){
                 cpu->estado.cp = cpu->estado.pc;
                 return cpu->estado.modo;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 6:// mem[A1+X]=A
+        case 6:// mem[A1+X]=A    ARMX
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -129,29 +129,29 @@ err_t cpu_executa_1(cpu_t *cpu){
                 cpu->estado.cp = cpu->estado.pc;
                 return cpu->estado.modo;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 7://X=A
+        case 7://X=A    MVAX
             cpu->estado.x = cpu->estado.a;
             cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 8://A=X
+        case 8://A=X    MVXA
             cpu->estado.a = cpu->estado.x;
             cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 9://X++
+        case 9://X++   INCX
             cpu->estado.x++;
             cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 10://A+=mem[A1]
+        case 10://A+=mem[A1]     SOMA
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -164,11 +164,11 @@ err_t cpu_executa_1(cpu_t *cpu){
             }else{
                 cpu->estado.a += a1;               //faco a operacao
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 11://A-=mem[A1]
+        case 11://A-=mem[A1]   SUB
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -182,11 +182,11 @@ err_t cpu_executa_1(cpu_t *cpu){
                 int a2 = a1;
                 cpu->estado.a -= a2;               //faco a operacao
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 12://A*=mem[A1]
+        case 12://A*=mem[A1]   MULT
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -200,11 +200,11 @@ err_t cpu_executa_1(cpu_t *cpu){
                 int a2 = a1;
                 cpu->estado.a *= a2;               //faco a operacao
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 13:// A/=mem[A1]
+        case 13:// A/=mem[A1]    DIV
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -218,11 +218,11 @@ err_t cpu_executa_1(cpu_t *cpu){
                 int a2 = a1;
                 cpu->estado.a /= a2;               //faco a operacao
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 14://A%=mem[A1]
+        case 14://A%=mem[A1]   RESTO
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->estado.pc;
@@ -236,72 +236,75 @@ err_t cpu_executa_1(cpu_t *cpu){
                 int a2 = a1;
                 cpu->estado.a %= a2;               //faco a operacao
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 15://A=-A
+        case 15://A=-A   NEG
             cpu->estado.a = cpu->estado.a - cpu->estado.a * 2;
             cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 16://PC=A1
+        case 16://PC=A1    DESV
             cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
             if(cpu->estado.modo != ERR_OK){      //verifica se deu algo de errado na funcao me_le
                 cpu->estado.cp = cpu->estado.pc;//se tiver erro coloco o enderrco no cp(complemento de parada
                 return cpu->estado.modo;
             }
             cpu->estado.pc = a1;
-            cpu->estado.pc++;
             return cpu->estado.modo;
         break;
 
-        case 17://se A for 0, PC=A1
+        case 17://se A for 0, PC=A1      DESVZ
             if(cpu->estado.a == 0){
                 cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);//pega o valor A1
                 if(cpu->estado.modo != ERR_OK){      //verifica se deu algo de errado na funcao me_le
                     cpu->estado.cp = cpu->estado.pc;
                     return cpu->estado.modo;
+                }else{
+                    cpu->estado.pc = a1;
+                    return cpu->estado.modo;
                 }
             }
-            cpu->estado.a = a1;
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 18://se A não for 0, PC=A1
+        case 18://se A não for 0, PC=A1      DESVNZ
             if(cpu->estado.a != 0){
                 cpu->estado.modo = mem_le(cpu->mem, cpu->estado.pc+1, &a1);
                 if(cpu->estado.modo != ERR_OK){
                     cpu->estado.cp = cpu->estado.pc;
                     return cpu->estado.modo;
+                }else{
+                    cpu->estado.pc = a1;
+                    return cpu->estado.modo;
                 }
             }
-            cpu->estado.a = a1;
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 19://A=es[A1]
-            cpu->es = cpu->mem[cpu->estado.pc+1];
-            cpu->estado.modo = es_le(cpu->es, 0, &cpu->estado.a);
+        case 19://A=es[A1]    LE
+            cpu->es = cpu->mem->mem[cpu->estado.pc+1];
+            cpu->estado.modo = es_le(&cpu->es, 0, &cpu->estado.a);
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->es;
                 return cpu->estado.modo;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc+=2;
             return cpu->estado.modo;
         break;
 
-        case 20://es[A1]=A
-            cpu->es = cpu->mem[cpu->estado.pc+1];
-            cpu->estado.modo = es_escreve(cpu->es, 1, cpu->estado.a);
+        case 20://es[A1]=A     ESCR
+            cpu->es = cpu->mem->mem[cpu->estado.pc+1];
+            cpu->estado.modo = es_escreve(&cpu->es, 1, cpu->estado.a);
             if(cpu->estado.modo != ERR_OK){
                 cpu->estado.cp = cpu->es;
                 return cpu->estado.modo;
             }
-            cpu->estado.pc++;
+            cpu->estado.pc += 2;
             return cpu->estado.modo;
         break;
 

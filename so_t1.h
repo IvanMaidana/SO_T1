@@ -7,8 +7,14 @@ typedef enum {
      ERR_CPU_INSTR_INV, // tentativa de execução de instrução inexistente
 } err_t;
 
+
+
 //memoria
-typedef int mem_t;
+typedef struct mem_t mem_t;
+struct mem_t {
+  int tam;  //tamanho da memoria
+  int *mem;  //propria memoria
+};
 
 mem_t *mem_cria(int tam); //cria memoria
 int mem_tam(mem_t *m);   // verifica o tamanho da memoria
@@ -17,12 +23,21 @@ err_t mem_escreve(mem_t *m, int endereco, int valor);//escreve um valor da memor
 void mem_destroi(mem_t *m);  //libera memoria
 
 
-//entrada e saida
-typedef int es_t;
 
-es_t *es_cria(); //cria o controlador de e/s
+
+
+//entrada e saida
+typedef struct es_t es_t;
+typedef enum { leitura, escrita } acesso_t;
+typedef enum { teclado=0, video=1 } dispositivo_t;
+
+err_t verif_acesso(es_t *es, int dispositivo, acesso_t tipo);
+es_t *es_cria(void); //cria o controlador de e/s
 err_t es_le(es_t *es, int dispositivo, int *pvalor);//le um valor
 err_t es_escreve(es_t *es, int dispositivo, int valor);//printa um valor no terminal
+
+
+
 
 
 //cpu
@@ -38,7 +53,7 @@ typedef struct{
 typedef struct{
         cpu_estado_t estado; //representa o estado da cpu
         mem_t *mem;  // vetor que representa a memoria
-        es_t es;    //controlador  de entrada e saida
+        es_t *es;    //controlador  de entrada e saida
 }cpu_t;
 
 cpu_t *cpu_cria(); //aloca a struct da cpu

@@ -3,34 +3,49 @@
 
 #include"so_t1.h"
 
-es_t *es_cria(){
-    es_t *controlador = (es_t*)malloc(sizeof(es_t));
-    controlador = 0;
+struct es_t {
+  // não tem muito o que colocar aqui, os dispositivos estão hard-coded abaixo
+};
+
+
+err_t verif_acesso(es_t *es, int dispositivo, acesso_t tipo){
+  // só tem 2 dispositivos, teclado e video
+  if (dispositivo != teclado && dispositivo != video) return ERR_ES_DISP_INV;
+  // do teclado só dá para ler
+  if (dispositivo == teclado && tipo != leitura) return ERR_ES_OP_INV;
+  // o video é só para escrita
+  if (dispositivo == video && tipo != escrita) return ERR_ES_OP_INV;
+  return ERR_OK;
+}
+
+es_t *es_cria(void){
+    es_t *controlador = malloc(sizeof(*controlador));
+    if (controlador == NULL){
+            printf("Memoria insuficiente.\n");
+            exit(1); // aborta o programa porque nao foi possivel alocar a memoria da nossa cpu
+    }
     return controlador;
 }
 
 
-err_t es_le(es_t *es, int dispositivo, int *pvalor){   //o=teclado    es = 0 ler
-    if(dispositivo != 0){
-        return ERR_ES_DISP_INV;  //dispositivo errado
-    }else if (es != 0){
-        return ERR_ES_OP_INV;   //operacao invalida(nao e para ler)
-    }else{
+err_t es_le(es_t *es, int dispositivo, int *pvalor){   //o=teclado
+
+    err_t err = verif_acesso(es, dispositivo, leitura);
+    if(err == ERR_OK){
         int valor;
+        printf("Digite um numro inteiro\n");
         scanf("%d", &valor);
         *pvalor = valor;
-        return ERR_OK;
     }
+    return err;
 }
 
 
-err_t es_escreve(es_t *es, int dispositivo, int valor){  //1=terminal    es = 1 escrever
-    if(dispositivo != 1){
-         return ERR_ES_DISP_INV; //dispositivo errado
-    }else if (es != 1){
-        return ERR_ES_OP_INV;   //operacao invalida(nao e printar na tela)
-    }else{
-        printf("%d\n", valor);
-        return ERR_OK;
+err_t es_escreve(es_t *es, int dispositivo, int valor){  //1=terminal
+
+    err_t err = verif_acesso(es, dispositivo, escrita);
+    if(err == ERR_OK){
+        printf("VALOR DA ESCRITA: %d\n", valor);
     }
+    return err;
 }
