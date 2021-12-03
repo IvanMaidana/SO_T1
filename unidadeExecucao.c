@@ -1,11 +1,14 @@
+#include "unidadeExecucao.h"
+#include<stdlib.h>
 #include<stdio.h>
-#include <stdlib.h>
-
-#include "so_t1.h"
 
 
 cpu_estado_t *cpu_estado_cria(){
     cpu_estado_t *estado = (cpu_estado_t*)malloc(sizeof(cpu_estado_t));
+    if(estado == NULL){
+        printf("Nao foi possivel alocar memoria para o estado da cpu ou do processo\n");
+        exit(1);
+    }
     estado->pc = 0;
     estado->a = 0;
     estado->x = 0;
@@ -23,14 +26,6 @@ cpu_estado_t *cpu_estado(cpu_t *cpu){
     return &cpu->estado;
 }
 
-void cpu_altera_estado(cpu_t *cpu, cpu_estado_t *estado){
-    cpu->estado.pc = estado->pc;
-    cpu->estado.a = estado->a;
-    cpu->estado.x = estado->x;
-    cpu->estado.modo = estado->modo;
-    cpu->estado.cp = estado->cp;
-}
-
 void cpu_altera_memoria(cpu_t *cpu, mem_t *mem){
     cpu->mem = mem;
 }
@@ -40,7 +35,6 @@ void cpu_altera_es(cpu_t *cpu, es_t *es){
 }
 
 err_t cpu_executa_1(cpu_t *cpu){
-    printf("intrucao que vai ser executada %d\n", cpu->mem->mem[cpu->estado.pc]);
     int a1;
     switch(cpu->mem->mem[cpu->estado.pc]){
         case 0:   // NOP
@@ -49,9 +43,8 @@ err_t cpu_executa_1(cpu_t *cpu){
         break;
 
         case 1:   //PARA
-            cpu->estado.modo = ERR_CPU_PARADA;
-            cpu->estado.cp = cpu->estado.pc; //acerta o valor de cp
-            return cpu->estado.modo;
+            cpu->estado.cp = cpu->estado.pc;
+            return ERR_CPU_PRIV;
         break;
 
         case 2://A=A1   CARGI
@@ -287,24 +280,14 @@ err_t cpu_executa_1(cpu_t *cpu){
         break;
 
         case 19://A=es[A1]    LE
-            cpu->es = cpu->mem->mem[cpu->estado.pc+1];
-            cpu->estado.modo = es_le(&cpu->es, 0, &cpu->estado.a);
-            if(cpu->estado.modo != ERR_OK){
-                cpu->estado.cp = cpu->es;
-                return cpu->estado.modo;
-            }
-            cpu->estado.pc+=2;
+            cpu->estado.cp = cpu->estado.pc;
+            cpu->estado.modo = ERR_CPU_PRIV;
             return cpu->estado.modo;
         break;
 
         case 20://es[A1]=A     ESCR
-            cpu->es = cpu->mem->mem[cpu->estado.pc+1];
-            cpu->estado.modo = es_escreve(&cpu->es, 1, cpu->estado.a);
-            if(cpu->estado.modo != ERR_OK){
-                cpu->estado.cp = cpu->es;
-                return cpu->estado.modo;
-            }
-            cpu->estado.pc += 2;
+            cpu->estado.cp = cpu->estado.pc;
+            cpu->estado.modo = ERR_CPU_PRIV;
             return cpu->estado.modo;
         break;
 

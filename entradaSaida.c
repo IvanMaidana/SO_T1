@@ -1,11 +1,6 @@
-#include<stdio.h>
+# include "entradaSaida.h"
 #include <stdlib.h>
-
-#include"so_t1.h"
-
-struct es_t {
-  // não tem muito o que colocar aqui, os dispositivos estão hard-coded abaixo
-};
+#include<stdio.h>
 
 
 err_t verif_acesso(es_t *es, int dispositivo, acesso_t tipo){
@@ -18,34 +13,64 @@ err_t verif_acesso(es_t *es, int dispositivo, acesso_t tipo){
   return ERR_OK;
 }
 
-es_t *es_cria(void){
-    es_t *controlador = malloc(sizeof(*controlador));
-    if (controlador == NULL){
+es_t *es_cria(char leitura[10], char escrita[10]){
+    es_t *es = malloc(sizeof(*es));
+    if (es == NULL){
             printf("Memoria insuficiente.\n");
             exit(1); // aborta o programa porque nao foi possivel alocar a memoria da nossa cpu
     }
-    return controlador;
-}
+    int i=0;
+    while(leitura[i] != '\0'){
+        es->leitura[i] = leitura[i];
+        es->escrita[i] = escrita[i];
+        i++;
+    }
 
+    FILE *file = fopen(es->escrita, "a"); //cria o arquivo de escrita
+    if (file == NULL){
+            printf("Memoria insuficiente para alocar o arquivo de escrita.\n");
+            exit(1);
+    }
+    FILE *files = fopen(es->leitura, "a"); // cria o arquivo de leitura
+    if (files == NULL){
+            printf("Memoria insuficiente para alocar o arquivo de leitura.\n");
+            exit(1);
+    }
+
+    fclose(file);
+    fclose(files);
+    return es;
+ }
 
 err_t es_le(es_t *es, int dispositivo, int *pvalor){   //o=teclado
 
     err_t err = verif_acesso(es, dispositivo, leitura);
     if(err == ERR_OK){
-        int valor;
-        printf("Digite um numro inteiro\n");
-        scanf("%d", &valor);
-        *pvalor = valor;
+        FILE *ler = fopen(es->leitura, "a");//abri o arquivo para escrita
+        if(ler == NULL){
+           printf("Nao foi possivel abrir o arquivo\n");
+        }else{
+            int valor;
+            scanf("%d", &valor);
+            *pvalor = valor;
+            fprintf(ler, "%d", valor);
+            fclose(ler);
+        }
     }
     return err;
 }
-
 
 err_t es_escreve(es_t *es, int dispositivo, int valor){  //1=terminal
 
     err_t err = verif_acesso(es, dispositivo, escrita);
     if(err == ERR_OK){
-        printf("VALOR DA ESCRITA: %d\n", valor);
-    }
-    return err;
+        FILE *escreve = fopen(es->escrita, "a");//abri o arquivo para escrita
+        if(escreve == NULL){
+           printf("Nao foi possivel abrir o arquivo\n");
+        }else{
+            fprintf(escreve, "%d", valor);
+        }
+        fclose(escreve);
+   }
+   return err;
 }

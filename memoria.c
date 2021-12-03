@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include"so_t1.h"
+# include "memoria.h"
+#include <stdbool.h>
+#include<stdlib.h>
+#include<stdio.h>
 
 //retorna o tamanho da memoria
 int mem_tam(mem_t *m){
