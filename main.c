@@ -13,7 +13,7 @@ int main(){
     rel *relo = cria_rel(); // relogio
     cpu_t *cpu = cpu_cria(); //cria cpu
 
-
+    inicializa_vet_programas(); // Vai inicializar o vetor de programas
     so_inicializa(so, cpu, relo);// inicializa o so/cpu/descritor de processos
 
 

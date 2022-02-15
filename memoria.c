@@ -20,6 +20,7 @@ mem_t *mem_cria(int tam){
     if(m->mem == NULL){
         free(m);
         m = NULL;
+        printf("Nao foi possivel alocar a memoria\n");
     }
     return m;
 }

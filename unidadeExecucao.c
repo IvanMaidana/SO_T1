@@ -35,6 +35,7 @@ void cpu_altera_es(cpu_t *cpu, es_t *es){
 }
 
 err_t cpu_executa_1(cpu_t *cpu){
+    printf("ESTA E AINSTRUCAO QUE STA SENDO EXECUTADA %d \n", cpu->mem->mem[cpu->estado.pc]);
     int a1;
     switch(cpu->mem->mem[cpu->estado.pc]){
         case 0:   // NOP
@@ -56,7 +57,6 @@ err_t cpu_executa_1(cpu_t *cpu){
             cpu->estado.a = a1;
             cpu->estado.pc+=2;
             return cpu->estado.modo;
-
         break;
 
         case 3://A=mem[A1]    CARGM
@@ -291,6 +291,12 @@ err_t cpu_executa_1(cpu_t *cpu){
             return cpu->estado.modo;
         break;
 
+        case 21: //cria processo
+            cpu->estado.cp = cpu->estado.pc;
+            cpu->estado.modo = ERR_CPU_PRIV;
+            return cpu->estado.modo;
+        break;
+
         default:
             cpu->estado.modo = ERR_CPU_INSTR_INV;
             if(cpu->estado.modo != ERR_OK){
@@ -299,3 +305,4 @@ err_t cpu_executa_1(cpu_t *cpu){
             return cpu->estado.modo;
     }
 }
+

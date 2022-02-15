@@ -1,15 +1,18 @@
 #include "relogio.h"
 #include<stdlib.h>
 #include<stdio.h>
+#include<stdbool.h>
 
 struct desp{
-    int incremento;
     int despertador;
+    int intervalo;
+    int qual_processo;
+    bool Periodico;
 };
 
 struct rel{
     int relo;
-    desp desp[50];
+    desp desp[500];
 };
 
 
@@ -25,20 +28,23 @@ rel *cria_rel(void){
 }
 
 void inic_despe(rel *relo){
-    for(int i=0; i<50; i++){
+    for(int i=0; i<500; i++){
         relo->desp[i].despertador = -20;     //inicializa os despertadores com um valor imposivel
     }
 }
 
-void cria_despertadores(rel *relo, int inicio, int periodo){
-    int i=0, controle=0;
-    while(i<50 && controle == 0){
+void cria_despertadores(rel *relo, int inicio, int intervalo, int qual_processo, bool periodico){//essa variavel vai controlar se o despertador e periodico
+
+    for(int i=0; i<500; i++){
         if(relo->desp[i].despertador == -20){
-            relo->desp[i].incremento = periodo;
+            relo->desp[i].intervalo = intervalo;
             relo->desp[i].despertador = inicio;
-            controle = 1;
+            relo->desp[i].qual_processo = qual_processo;
+            if(periodico == true){
+                relo->desp[i].Periodico = true;
+            }
+        i = 500;
         }
-        i++;
     }
 }
 
@@ -55,11 +61,17 @@ void imprime_relogio(rel *relo){
 }
 
 int tem_despertador(rel *relo){
-    for(int i=0; i<50; i++){
+    for(int i=0; i<500; i++){
         if(relo->desp[i].despertador == relo->relo){
-            relo->desp[i].despertador += relo->desp[i].incremento;
-            return 1;  //tem despretador
+            if(relo->desp[i].qual_processo >= 0 && relo->desp[i].qual_processo < 10){
+                relo->desp[i].despertador = -50;
+                return relo->desp[i].qual_processo;    //tem despertador e para desbloquear um processo
+            }
+            if(relo->desp[i].Periodico == true){
+                relo->desp[i].despertador += relo->desp[i].intervalo;
+            }
+            return 11;  //tem despretador
         }
     }
-    return 0;  //nao tem despertador
+    return -1;  //nao tem despertador
 }
