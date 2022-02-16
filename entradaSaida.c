@@ -13,51 +13,45 @@ err_t verif_acesso(es_t *es, int dispositivo, acesso_t tipo){
   return ERR_OK;
 }
 
-es_t *es_cria(char leitura[10], char escrita[10]){
-    printf("leitura %s \n", leitura);
-    printf("Escrita %s \n", escrita);
+
+
+es_t *es_cria(){
     es_t *es = malloc(sizeof(*es));
     if (es == NULL){
             printf("Memoria insuficiente.\n");
             exit(1); // aborta o programa porque nao foi possivel alocar a memoria da nossa cpu
     }
+    return es;
+}
+
+void *es_cria_escrita(es_t *es, char escrita[10]){
     int i=0;
-    while(leitura[i] != '\0'){
-        es->leitura[i] = leitura[i];
+    while(escrita[i] != '\0'){
         es->escrita[i] = escrita[i];
         i++;
     }
-
     FILE *file = fopen(es->escrita, "w"); //cria o arquivo de escrita  "no t4 trocar po "w"
     if (file == NULL){
             printf("Memoria insuficiente para alocar o arquivo de escrita.\n");
             exit(1);
     }
-    FILE *files = fopen(es->leitura, "a+"); // cria o arquivo de leitura  "no t4 trocar po "r"
-    if (files == NULL){
-            printf("Memoria insuficiente para alocar o arquivo de leitura.\n");
-            exit(1);
-    }
-
     fclose(file);
-    fclose(files);
-    return es;
- }
+}
+
+void *es_cria_leitura(es_t *es, char leitura[10]){
+    es->leitura = fopen(leitura, "r");//abri o arquivo para escrita
+        if(es->leitura == NULL){
+           printf("Nao foi possivel abrir o arquivo\n");
+        }
+}
+
 
 err_t es_le(es_t *es, int dispositivo, int *pvalor){   //o=teclado
-
     err_t err = verif_acesso(es, dispositivo, leitura);
     if(err == ERR_OK){
-        FILE *ler = fopen(es->leitura, "r");//abri o arquivo para escrita
-        if(ler == NULL){
-           printf("Nao foi possivel abrir o arquivo\n");
-        }else{
             int valor;
-            scanf("%d", &valor);
+            fscanf(es->leitura, "%d", &valor);
             *pvalor = valor;
-            fprintf(ler, "%d", valor);
-            fclose(ler);
-        }
     }
     return err;
 }

@@ -20,6 +20,9 @@ void alimenta_descritor(so_t *so, int indice);
 void inicializa_processo(so_t *so, int i, int progr[], int indice);
 
 err_t verifica_interrupcao(err_t err, so_t *so, int processo);
+//int escalonador_circular(so_t *so);
+//int coloca_no_fim_da_fila(so_t *so, int indice);
+//int retira_da_fila(so_t *so, int indice);
 int escalonador(so_t *so);
 int escalonador_com_prioridade(so_t *so);
 

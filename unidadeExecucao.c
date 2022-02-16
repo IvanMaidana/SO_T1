@@ -35,7 +35,6 @@ void cpu_altera_es(cpu_t *cpu, es_t *es){
 }
 
 err_t cpu_executa_1(cpu_t *cpu){
-    printf("ESTA E AINSTRUCAO QUE STA SENDO EXECUTADA %d \n", cpu->mem->mem[cpu->estado.pc]);
     int a1;
     switch(cpu->mem->mem[cpu->estado.pc]){
         case 0:   // NOP

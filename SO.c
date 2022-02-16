@@ -6,15 +6,17 @@
 #define TAM 100 // o tamanho da memória, tambem o tamanho do vetor descritor de processos
 int qual_processo=0;
 int id=0;
+descri_proces *inicio = NULL;  //para o escalonador circular
+descri_proces *exe_agora = NULL;
 
 struct programa{
-    int tam_mem;   //tamanho que a processo vai usar
-    int *conteudo; // conteudo do processo
-    bool leitura;  // vai utilizar leitura
-    bool escrita;   //vai usar escrita
-    char *leituraa;     //ponteiro para o arquivo de leitura
-    int tempoE;
-    int tempoL;
+    int tam_mem;      //tamanho que a processo vai usar
+    int *conteudo;    // conteudo do processo
+    bool leitura;     // vai utilizar leitura
+    bool escrita;     //vai usar escrita
+    char *leituraa;   //nome do arauivo de leitura
+    int tempoE;       //tempo de bloqueio que o processo vai ficar para fazer escrita
+    int tempoL;       //tempo de bloqueio que o processo vai ficar para fazer leitura
 };
 programa vetor_programas[10];  //declaracao do vetor de programas
 
@@ -34,14 +36,14 @@ int inicializa_vet_programas(){
     for(int i=0; i<vetor_programas[0].tam_mem; i++){
         vetor_programas[0].conteudo[i] = progr0[i];
     }
-    vetor_programas[0].leitura=1;
-    vetor_programas[0].leitura=1;
+    vetor_programas[0].leitura = 0;
+    vetor_programas[0].escrita = 0;
     vetor_programas[0].leituraa = "Leitura_0.txt";
     vetor_programas[0].tempoE = 2;
     vetor_programas[0].tempoL = 2;
 
     /*/////////////////////////////////////////Segundo programa///////////////////////////////////////////////////////*/
-    int progr1[18] = {2, 0, 7, 2, 10, 5, 17, 8, 20, 1, 9, 8, 11, 17, 18, 7, 1, 0};
+    int progr1[18] = { 2, 0, 7, 19, 0, 5, 15, 8, 9, 8, 11, 15, 18, 7, 1, 0};
     vetor_programas[1].tam_mem = 18;
     vetor_programas[1].conteudo = (int*)malloc(vetor_programas[1].tam_mem * sizeof(int));//cria o vetor de processos
     if(vetor_programas[1].conteudo == NULL){
@@ -51,8 +53,8 @@ int inicializa_vet_programas(){
     for(int i=0; i<vetor_programas[1].tam_mem; i++){
         vetor_programas[1].conteudo[i] = progr1[i];
     }
-    vetor_programas[1].leitura=1;
-    vetor_programas[1].leitura=1;
+    vetor_programas[1].leitura = 1;
+    vetor_programas[1].escrita = 0;
     vetor_programas[1].leituraa = "Leitura_1.txt";
     vetor_programas[1].tempoE = 3;
     vetor_programas[0].tempoL = 3;
@@ -67,8 +69,8 @@ int inicializa_vet_programas(){
     for(int i=0; i<vetor_programas[2].tam_mem; i++){
         vetor_programas[2].conteudo[i] = progr2[i];
     }
-    vetor_programas[2].leitura=1;
-    vetor_programas[2].leitura=1;
+    vetor_programas[2].leitura = 0;
+    vetor_programas[2].escrita = 1;
     vetor_programas[2].leituraa = "Leitura_2.txt";
     vetor_programas[2].tempoE = 4;
     vetor_programas[0].tempoL = 4;
@@ -102,6 +104,7 @@ struct descri_proces{ //descricao de processos
     tempo_pro *temp;       //tempos em cada estado do processo
     int temp_bloq_e;
     int temp_bloq_l;
+    struct descri_proces *prox;
 };
 
 
@@ -156,29 +159,34 @@ tempo_pro *temp_cria(){
 
 
 void inicializa_descritor(so_t *so){
-    int cont=0;
-    char nome_escr[10] = "escrita";  //são os nomes bases dos arquivos
-    char nome_leit[10] = "leitura";
-    char nome_escr1[20];   //são os nomes já alterados
-    char nome_leit1[20];
-
-    sprintf(nome_escr1, "%s_%d.txt", nome_escr, cont);//monta o nome dos arquivos de e/s
-    sprintf(nome_leit1, "%s_%d.txt", nome_leit, cont);
-    so->descri[0].es = es_cria(nome_leit1, nome_escr1);
-    inicializa_processo(so, cont, vetor_programas[0].conteudo, cont);
+    if(vetor_programas[0].escrita == true || vetor_programas[0].leitura == true){
+        so->descri[0].es = es_cria();   //cria a struct de e/s
+        if(vetor_programas[0].escrita == true){
+            char nome_escr[10] = "escrita";  //são os nomes bases dos arquivos
+            char nome_escr1[20];   //são os nomes já alterados
+            sprintf(nome_escr1, "%s_%d.txt", nome_escr, 0);//monta o nome dos arquivos de e/s
+            es_cria_escrita(so->descri[0].es, nome_escr1);
+        }else if(vetor_programas[0].leitura == true){
+            es_cria_leitura(so->descri[0].es, vetor_programas[0].leituraa);
+        }
+    }
+    inicializa_processo(so, 0, vetor_programas[0].conteudo, 0);
 }
 
 void alimenta_descritor(so_t *so, int indice){
-    char nome_escr[10] = "escrita";  //são os nomes bases dos arquivos
-    char nome_leit[10] = "leitura";
-    char nome_escr1[20];   //são os nomes já alterados
-    char nome_leit1[20];
-
-    sprintf(nome_escr1, "%s_%d.txt", nome_escr, indice);//monta o nome dos arquivos de e/s
-    sprintf(nome_leit1, "%s_%d.txt", nome_leit, indice);
     for(int i=0; i<10; i++){
         if(so->descri[i].est == LIVRE){
-            so->descri[i].es = es_cria(nome_leit1, nome_escr1);
+            if(vetor_programas[indice].escrita == true || vetor_programas[indice].leitura == true){
+                so->descri[i].es = es_cria();   //cria a struct de e/s
+                if(vetor_programas[indice].escrita == true){
+                    char nome_escr[10] = "escrita";  //são os nomes bases dos arquivos
+                    char nome_escr1[20];   //são os nomes já alterados
+                    sprintf(nome_escr1, "%s_%d.txt", nome_escr, i);//monta o nome dos arquivos de e/s
+                    es_cria_escrita(so->descri[i].es, nome_escr1);
+                }else if(vetor_programas[indice].leitura == true){
+                    es_cria_leitura(so->descri[i].es, vetor_programas[indice].leituraa);
+                }
+            }
             inicializa_processo(so, i, vetor_programas[indice].conteudo, indice);
             i=10;
         }
@@ -199,6 +207,7 @@ void inicializa_processo(so_t *so, int i, int progr[], int indice){
     so->descri[i].temp->tempo_da_ultima_execucao = 0;
     so->descri[i].temp_bloq_e = vetor_programas[indice].tempoE;
     so->descri[i].temp_bloq_l = vetor_programas[indice].tempoL;
+    so->descri[i].prox = NULL;
     for(int j = 0; j < vetor_programas[indice].tam_mem; j++){   //carrego o programa para o descritor
         if (mem_escreve(so->descri[i].mem, j, progr[j]) != ERR_OK) {
             printf("Erro de memoria, endereco %d\n", j);
@@ -236,14 +245,13 @@ err_t verifica_interrupcao(err_t err, so_t *so, int processo){
             troca_estado(so, MORTO, qual_processo);
             salva_contexto_processo(so);
         }else if(so->cpu->mem->mem[so->cpu->estado.cp] == 21){
-            printf("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%VALOR QUE ESTA NA MEMORIA  %d \n", so->descri->mem->mem[so->cpu->estado.pc+1]);
             alimenta_descritor(so, so->descri->mem->mem[so->cpu->estado.pc+1]);
             so->cpu->estado.pc += 2;
             so->cpu->estado.modo = ERR_OK;
             troca_estado(so, PRONTO, qual_processo);
             salva_contexto_processo(so);
         }
-        int certo = escalonador(so);
+        int certo = escalonador_com_prioridade(so);
         if(certo == -1){
             printf("Nao tem processo em estado de pronto \n");
             so->cpu->estado.modo = ERR_CPU_PARADA;
@@ -261,7 +269,7 @@ err_t verifica_interrupcao(err_t err, so_t *so, int processo){
         salva_contexto_processo(so);
         so->cpu->estado.modo = ERR_OK;
         err = ERR_OK;
-        int certo = escalonador(so);
+        int certo = escalonador_com_prioridade(so);
         if(certo == -1){
             printf("Não tem processo em estado de pronto \n");
             so->cpu->estado.modo = ERR_CPU_PARADA;
@@ -274,8 +282,89 @@ err_t verifica_interrupcao(err_t err, so_t *so, int processo){
     return err;
 }
 
+/*int escalonador_circular(so_t *so){
+    descri_proces *a = inicio;
+    int bloqueados = 0, tam_lista = 0, i=0;
+    for(int i=0; i<10; i++){
+        if(a != NULL){
+            tam_lista++;
+            a = a->prox;
+        }
+    }
+    printf("O TAMANHO DA LISTA %d \n", tam_lista);
 
-int escalonador(so_t *so){
+    while(i < tam_lista){
+        if(exe_agora == NULL && tam_lista ==1){ //primeiro processo a ser escalonado
+            qual_processo = 0;
+            recupera_contexto_processo(so);
+            return 1;
+        }else if(exe_agora->prox != NULL){
+            exe_agora = exe_agora->prox;
+            qual_processo = exe_agora->id;
+            recupera_contexto_processo(so);
+            return 1;
+        }else if(exe_agora->prox == NULL){  //se chegar no final da lista escalona o primeiro da lista
+            if(inicio != NULL){
+                exe_agora = inicio;
+                qual_processo = exe_agora->id;
+                recupera_contexto_processo(so);
+                return 1;
+            }else if(inicio == NULL){
+                return 0;
+            }
+        }else if(exe_agora->prox == BLOQUEADO){
+            bloqueados++;
+        }
+        exe_agora = exe_agora->prox;
+        i++;
+    }
+    if(bloqueados == 0){  //Nao tem masi como escalonar todos os processos estao mortos
+        return 0;
+    }else if(bloqueados > 0){ //so tem processo bloqueado
+        return -1;
+    }
+}
+
+int coloca_no_fim_da_fila(so_t *so, int indice){
+    descri_proces *a = inicio;
+    descri_proces *ant = NULL;
+    if(a == NULL){
+        a = &so->descri[indice];
+    }else{
+        for(int i=0; i<10; i++){
+            if(a == NULL){
+                ant->prox = &so->descri[indice];
+                return 0;
+            }
+            ant = a;
+            a = a->prox;
+        }
+    }
+}
+
+int retira_da_fila(so_t *so, int indice){
+    descri_proces *a = inicio;
+    descri_proces *ant = NULL;
+    if(&so->descri[indice] == a){  //se for o primeiro elemento da lista
+        if(a->prox != NULL){
+            inicio = a->prox;
+            a = NULL;
+            return 0;
+        }
+    }
+    for(int i=0; i<10; i++){
+        if(&so->descri[indice] == a){  //Para retirar demais elementos
+            ant = a->prox;
+            a ==NULL;
+            return 0;
+        }
+        ant = a;
+        a = a->prox;
+    }
+}*/
+
+
+int escalonador(so_t *so){ //primeiro escalonador implementado
     int tam = 10;
     int verifica_se_tem_bloqueado = 0;
     int roda = qual_processo+1;
@@ -302,6 +391,7 @@ int escalonador(so_t *so){
     }
     return 0;
 }
+
 
 int escalonador_com_prioridade(so_t *so){
     int tam = 10;
@@ -367,6 +457,11 @@ void cpu_altera_estado(cpu_t *cpu, cpu_estado_t *estado){
 }
 
  void troca_estado(so_t *so, est_p novo_estado, int indice){ // troca o estado de 'proc' para 'estado_novo' (em_exec, pronto, bloqueado, morto)
+    /* if(novo_estado == PRONTO){
+        coloca_no_fim_da_fila(so, indice);   //isso e para o escalonador circular
+     }else if(novo_estado == BLOQUEADO){
+        retira_da_fila(so, indice);
+     }*/
      est_p estado_velho = so->descri[indice].est;
 
      int temp_agora = que_horas_sao(so->relo);
